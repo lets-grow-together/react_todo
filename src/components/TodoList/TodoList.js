@@ -8,12 +8,13 @@ const cx = className.bind(styles);
 
 class TodoList extends Component {
   render() {
-    const { todos } = this.props;
+    const { todos, onRemove } = this.props;
 
     const todoItems = todos.map(todo => (
       <TodoItem
         key={todo.id}
         isDone={todo.isDone}
+        onRemove={() => onRemove(todo.id)}
       >
         {todo.text}
       </TodoItem>

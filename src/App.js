@@ -34,9 +34,19 @@ class App extends Component {
     });
   }
 
+  handleRemove = id => {
+    const { todos } = this.state;
+    const idx = todos.findIndex(todo => todo.id === id);
+    const nextTodos = [...todos.slice(0, idx), ...todos.slice(idx + 1)];
+
+    this.setState({
+      todos: nextTodos
+    });
+  }
+
   render() {
     const { input, todos } = this.state;
-    const { handleChange, handleInsert } = this;
+    const { handleChange, handleInsert, handleRemove } = this;
 
     return (
       <div className="App">
@@ -46,7 +56,10 @@ class App extends Component {
             onChange={handleChange}
             onInsert={handleInsert}
           />
-          <TodoList todos={todos} />
+          <TodoList
+            todos={todos}
+            onRemove={handleRemove}
+          />
           <Footer />
         </PageTemplate>
       </div>
