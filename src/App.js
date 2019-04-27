@@ -44,9 +44,23 @@ class App extends Component {
     });
   }
 
+  handleToggle = id => {
+    const { todos } = this.state;
+    const idx = todos.findIndex(todo => todo.id === id);
+    const nextTodos = [
+      ...todos.slice(0, idx),
+      { ...todos[idx], isDone: !todos[idx].isDone },
+      ...todos.slice(idx + 1)
+    ];
+
+    this.setState({
+      todos: nextTodos
+    });
+  }
+
   render() {
     const { input, todos } = this.state;
-    const { handleChange, handleInsert, handleRemove } = this;
+    const { handleChange, handleInsert, handleRemove, handleToggle } = this;
 
     return (
       <div className="App">
@@ -59,6 +73,7 @@ class App extends Component {
           <TodoList
             todos={todos}
             onRemove={handleRemove}
+            onToggle={handleToggle}
           />
           <Footer />
         </PageTemplate>
