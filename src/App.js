@@ -11,7 +11,7 @@ class App extends Component {
     todos: [
       { id: 0, text: '리액트 공부하기', isDone: true },
       { id: 1, text: 'ES6 기초', isDone: false },
-      { id: 2, text: '컴포넌트 스타일링 하기', isDone: false },
+      { id: 2, text: '컴포넌트 스타일링 하기', isDone: false }
     ]
   };
 
@@ -21,7 +21,7 @@ class App extends Component {
     this.setState({
       input: value
     });
-  }
+  };
 
   handleInsert = () => {
     const { input, todos } = this.state;
@@ -32,7 +32,7 @@ class App extends Component {
       input: '',
       todos: [...todos, newTodo]
     });
-  }
+  };
 
   handleRemove = id => {
     const { todos } = this.state;
@@ -42,7 +42,7 @@ class App extends Component {
     this.setState({
       todos: nextTodos
     });
-  }
+  };
 
   handleToggle = id => {
     const { todos } = this.state;
@@ -56,19 +56,42 @@ class App extends Component {
     this.setState({
       todos: nextTodos
     });
-  }
+  };
+
+  handleToggleAll = () => {
+    const { todos } = this.state;
+    const nextIsDone = todos.some(todo => !todo.isDone);
+    const nextTodos = todos.map(todo => ({ ...todo, isDone: nextIsDone }));
+    // const nextTodos = todos.map(todo =>
+    //   Object.assign({}, todo, { isDone: nextIsDone })
+    // )
+
+    this.setState({
+      todos: nextTodos
+    });
+  };
 
   render() {
     const { input, todos } = this.state;
-    const { handleChange, handleInsert, handleRemove, handleToggle } = this;
+    const {
+      handleChange,
+      handleInsert,
+      handleRemove,
+      handleToggle,
+      handleToggleAll
+    } = this;
+
+    const isAllDone = todos.every(todo => todo.isDone);
 
     return (
       <div className="App">
         <PageTemplate>
           <Header
             value={input}
+            isAllDone={isAllDone}
             onChange={handleChange}
             onInsert={handleInsert}
+            onToggleAll={handleToggleAll}
           />
           <TodoList
             todos={todos}

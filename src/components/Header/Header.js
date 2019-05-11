@@ -5,7 +5,7 @@ import styles from './Header.module.scss';
 
 const cx = classNames.bind(styles);
 
-const Header = ({ value, onChange, onInsert }) => {
+const Header = ({ value, isAllDone, onChange, onInsert, onToggleAll }) => {
   const handleKeyPress = e => {
     if (e.key === 'Enter' && e.target.value !== '') {
       onInsert();
@@ -26,6 +26,9 @@ const Header = ({ value, onChange, onInsert }) => {
         <input
           id="toggle-all"
           type="checkbox"
+          readOnly
+          checked={isAllDone}
+          onClick={onToggleAll}
         />
         <label htmlFor="toggle-all">
           <span className="sr-only">Toggle All</span>
