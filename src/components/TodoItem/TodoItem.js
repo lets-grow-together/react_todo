@@ -6,11 +6,40 @@ import styles from './TodoItem.module.scss';
 const cx = classNames.bind(styles);
 
 class TodoItem extends Component {
+  handleKeyPress = e => {
+    const { key, target: { value }} = e;
+    const { onEditSave } = this.props;
+
+    if (key === 'Enter' && value !== '') {
+      onEditSave(value);
+    }
+  };
+
+  handleEditCancel = () => {
+    const { children, onEditCancel } = this.props;
+    this.elInput.value = children;
+    onEditCancel();
+  }
+
+  componentDidUpdate(prevProps) {
+    const { isEditing } = this.props;
+    if (isEditing && !prevProps.isEditing) this.elInput.focus();
+  }
+
   render() {
-    const { children, isDone, onRemove, onToggle } = this.props;
+    const {
+      children,
+      isDone,
+      isEditing,
+      onRemove,
+      onToggle,
+      onEditStart
+    } = this.props;
+
+    const { handleKeyPress, handleEditCancel } = this;
 
     return (
-      <li className={cx('todo-item')}>
+      <li className={cx('todo-item', { 'is-editing': isEditing })}>
         <div className={cx('todo-item__view')}>
           <input
             type="checkbox"
@@ -19,12 +48,22 @@ class TodoItem extends Component {
             readOnly
             onClick={onToggle}
           />
-          <label className={cx({ 'is-done' : isDone })}>{children}</label>
+          <label
+            className={cx({ 'is-done': isDone })}
+            onDoubleClick={onEditStart}
+          >{children}</label>
           <button className={cx('todo-item__del')} onClick={onRemove}>
             <span className="sr-only">삭제</span>
           </button>
         </div>
-        <input type="text" className={cx('todo-item__edit')} />
+        <input
+          type="text"
+          className={cx('todo-item__edit')}
+          ref={elInput => (this.elInput = elInput)}
+          defaultValue={children}
+          onKeyPress={handleKeyPress}
+          onBlur={handleEditCancel}
+        />
       </li>
     );
   }
