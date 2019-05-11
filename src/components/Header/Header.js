@@ -6,7 +6,7 @@ import styles from './Header.module.scss';
 const cx = classNames.bind(styles);
 
 const Header = ({ value, onChange, onInsert }) => {
-  const handleKeyDown = e => {
+  const handleKeyPress = e => {
     if (e.key === 'Enter' && e.target.value !== '') {
       onInsert();
     }
@@ -20,7 +20,7 @@ const Header = ({ value, onChange, onInsert }) => {
         className={cx('todo__new-input')}
         value={value}
         onChange={onChange}
-        onKeyDown={handleKeyDown}
+        onKeyPress={handleKeyPress}
       />
       <div className={cx('todo__toggle-all')}>
         <input
