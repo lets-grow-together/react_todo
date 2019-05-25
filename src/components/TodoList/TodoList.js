@@ -7,6 +7,13 @@ import TodoItem from '../TodoItem';
 const cx = className.bind(styles);
 
 class TodoList extends Component {
+  shouldComponentUpdate(nextProps, nextState) {
+    const isTodoChange = this.props.todos !== nextProps.todos;
+    const isEditingIdChange = this.props.editingId !== nextProps.editingId;
+
+    return isTodoChange || isEditingIdChange;
+  }
+
   render() {
     const {
       todos,

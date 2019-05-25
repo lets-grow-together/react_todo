@@ -21,6 +21,13 @@ class TodoItem extends Component {
     onEditCancel();
   }
 
+  shouldComponentUpdate(nextProps, nextState) {
+    const isDoneChange = this.props.isDone !== nextProps.isDone;
+    const isEditing = (this.props.isEditing !== null) && (this.props.isEditing !== nextProps.isEditing);
+
+    return isDoneChange || isEditing;
+  }
+
   componentDidUpdate(prevProps) {
     const { isEditing } = this.props;
     if (isEditing && !prevProps.isEditing) this.elInput.focus();
