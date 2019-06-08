@@ -81,9 +81,22 @@ class App extends Component {
     const idx = todos.findIndex(todo => todo.id === id);
     const nextTodos = [...todos.slice(0, idx), ...todos.slice(idx + 1)];
 
-    this.setState({
+    this.setState((state, props) => ({
       todos: nextTodos
-    });
+    }));
+
+    console.log('deletTodo start');
+    api.deleteTodo(id)
+      .then(res => {
+        console.log('deleteTodo complete');
+      })
+      .catch(err => {
+        console.log('deleteTodo fail');
+        this.setState((state, props) => ({
+          todos
+        }));
+        throw err;
+      })
   };
 
   handleToggle = id => {
