@@ -10,3 +10,5 @@ export const getTodos = () => axi.get('/.json');
 export const insertTodo = text => axi.post('/.json', { text, isDone: false });
 
 export const deleteTodo = id => axi.delete(`/${id}/.json`);
+
+export const patchTodo = (id, source) => axi.patch(`/${id}/.json`, source);

@@ -102,15 +102,29 @@ class App extends Component {
   handleToggle = id => {
     const { todos } = this.state;
     const idx = todos.findIndex(todo => todo.id === id);
+    const nextIsDone = !todos[idx].isDone
     const nextTodos = [
       ...todos.slice(0, idx),
-      { ...todos[idx], isDone: !todos[idx].isDone },
+      { ...todos[idx], isDone: nextIsDone },
       ...todos.slice(idx + 1)
     ];
 
-    this.setState({
+    this.setState((state, props) => ({
       todos: nextTodos
-    });
+    }));
+    
+    console.log('toggleTodo start');
+    api.patchTodo(id, { isDone: nextIsDone })
+      .then(res => {
+        console.log('toggleTodo complete');
+      })
+      .catch(err => {
+        this.setState((state, props) => ({
+          todos
+        }));
+        console.log('toggleTodo fail');
+        throw err;
+      });
   };
 
   handleToggleAll = () => {
