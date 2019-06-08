@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 
+import * as api from '../lib/api';
 import PageTemplate from './PageTemplate';
 import Header from './Header';
 import TodoList from './TodoList';
@@ -9,12 +10,38 @@ class App extends Component {
   state = {
     input: '',
     todos: [
-      { id: 0, text: '리액트 공부하기', isDone: true },
-      { id: 1, text: 'ES6 기초', isDone: false },
-      { id: 2, text: '컴포넌트 스타일링 하기', isDone: false }
+      // { id: 0, text: '리액트 공부하기', isDone: true },
+      // { id: 1, text: 'ES6 기초', isDone: false },
+      // { id: 2, text: '컴포넌트 스타일링 하기', isDone: false }
     ],
     editingId: null
   };
+
+  componentDidMount() {
+    this.getTodos();
+  }
+
+  getTodos() {
+    console.log('getTodos start');
+    api.getTodos().then(res => {
+      const { data } = res;
+        const initialTodos = Object.keys(data).reduce(
+          (acc, key) => {
+            acc.push({ id: key, text: data[key].text, isDone: data[key].isDone });
+            return acc;
+          },
+          []
+        );
+        this.setState({
+          todos: initialTodos
+        });
+        console.log('getTodos complete');
+    })
+    .catch(err => {
+      console.log('getTodos fail');
+      throw err;
+    });
+  }
 
   handleChange = e => {
     const { value } = e.target;
