@@ -56,10 +56,24 @@ class App extends Component {
     const tempId = 'temp_' + Date.now();
     const newTodo = { id: tempId, text: input, isDone: false };
 
-    this.setState({
+    this.setState((state, props) => ({
       input: '',
       todos: [...todos, newTodo]
-    });
+    }));
+
+    console.log('insertTodo start');
+    api.insertTodo(input)
+      .then(res => {
+        this.setState((state, props) => ({
+          todos: [...todos, { id: res.data.name, text: input, isDone: false }]
+        }));
+        console.log('insertTodo complete');
+      }).catch(err => {
+        console.log('insertTodo fail');
+        this.setState((state, props) => ({
+          todos: todos
+        }));
+      });
   };
 
   handleRemove = id => {
