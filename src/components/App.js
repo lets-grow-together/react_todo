@@ -1,11 +1,12 @@
 import React, { Component } from 'react';
+import axios from 'axios';
+import produce from 'immer';
 
 import * as api from '../lib/api';
 import PageTemplate from './PageTemplate';
 import Header from './Header';
 import TodoList from './TodoList';
 import Footer from './Footer';
-import axios from 'axios';
 
 class App extends Component {
   state = {
@@ -57,16 +58,29 @@ class App extends Component {
     const tempId = 'temp_' + Date.now();
     const newTodo = { id: tempId, text: input, isDone: false };
 
-    this.setState((state, props) => ({
-      input: '',
-      todos: [...todos, newTodo]
+    // this.setState((state, props) => ({
+    //   input: '',
+    //   todos: [...todos, newTodo]
+    // }));
+
+    // this.setState(produce(this.state, draft => {
+    //   draft.input = '';
+    //   draft.todos.push(newTodo);
+    // }));
+
+    this.setState(produce((draft) => {
+      draft.input = '';
+      draft.todos.push(newTodo);
     }));
 
     console.log('insertTodo start');
     api.insertTodo(input)
       .then(res => {
-        this.setState((state, props) => ({
-          todos: [...todos, { id: res.data.name, text: input, isDone: false }]
+        // this.setState((state, props) => ({
+        //   todos: [...todos, { id: res.data.name, text: input, isDone: false }]
+        // }));
+        this.setState(produce(draft => {
+          draft.todos[draft.todos.length - 1].id = res.data.name;
         }));
         console.log('insertTodo complete');
       }).catch(err => {
@@ -80,11 +94,10 @@ class App extends Component {
   handleRemove = id => {
     const { todos } = this.state;
     const idx = todos.findIndex(todo => todo.id === id);
-    const nextTodos = [...todos.slice(0, idx), ...todos.slice(idx + 1)];
 
-    this.setState((state, props) => ({
-      todos: nextTodos
-    }));
+    this.setState(produce(draft => {
+      draft.todos.splice(idx, 1);
+    }))
 
     console.log('deletTodo start');
     api.deleteTodo(id)
@@ -103,15 +116,10 @@ class App extends Component {
   handleToggle = id => {
     const { todos } = this.state;
     const idx = todos.findIndex(todo => todo.id === id);
-    const nextIsDone = !todos[idx].isDone
-    const nextTodos = [
-      ...todos.slice(0, idx),
-      { ...todos[idx], isDone: nextIsDone },
-      ...todos.slice(idx + 1)
-    ];
+    const nextIsDone = !todos[idx].isDone;
 
-    this.setState((state, props) => ({
-      todos: nextTodos
+    this.setState(produce(draft => {
+      draft.todos[idx].isDone = nextIsDone;
     }));
     
     console.log('toggleTodo start');
@@ -131,13 +139,9 @@ class App extends Component {
   handleToggleAll = () => {
     const { todos } = this.state;
     const nextIsDone = todos.some(todo => !todo.isDone);
-    const nextTodos = todos.map(todo => ({ ...todo, isDone: nextIsDone }));
-    // const nextTodos = todos.map(todo =>
-    //   Object.assign({}, todo, { isDone: nextIsDone })
-    // )
 
-    this.setState((state, props) => ({
-      todos: nextTodos
+    this.setState(produce(draft => {
+      draft.todos.forEach(todo => todo.isDone = nextIsDone);
     }));
 
     const axiArray = todos.map(todo =>
@@ -167,15 +171,10 @@ class App extends Component {
   handleEditSave = (id, text) => {
     const { todos } = this.state;
     const idx = todos.findIndex(todo => todo.id === id);
-    const nextTodos = [
-      ...todos.slice(0, idx),
-      { ...todos[idx], text },
-      ...todos.slice(idx + 1)
-    ];
 
-    this.setState((state, props) => ({
-      todos: nextTodos,
-      editingId: null
+    this.setState(produce(draft => {
+      draft.todos[idx].text = text;
+      draft.editingId = null;
     }));
 
     console.log('editSave start');
@@ -198,10 +197,9 @@ class App extends Component {
 
   handleClearCompleted = () => {
     const { todos } = this.state;
-    const nextTodos = todos.filter(todo => !todo.isDone);
 
-    this.setState((state, props) => ({
-      todos: nextTodos
+    this.setState(produce(draft => {
+      draft.todos = draft.todos.filter(todo => !todo.isDone);
     }));
 
     const axiArray = todos
