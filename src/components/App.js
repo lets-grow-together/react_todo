@@ -5,6 +5,7 @@ import PageTemplate from './PageTemplate';
 import Header from './Header';
 import TodoList from './TodoList';
 import Footer from './Footer';
+import axios from 'axios';
 
 class App extends Component {
   state = {
@@ -135,9 +136,26 @@ class App extends Component {
     //   Object.assign({}, todo, { isDone: nextIsDone })
     // )
 
-    this.setState({
+    this.setState((state, props) => ({
       todos: nextTodos
-    });
+    }));
+
+    const axiArray = todos.map(todo =>
+      api.patchTodo(todo.id, { isDone: nextIsDone })
+    );
+
+    console.log('toggleAll start');
+    axios.all(axiArray)
+      .then(res => {
+        console.log('toggleAll complete');
+      })
+      .catch(err => {
+        console.log('toggleAll faile');
+        this.setState((state, props) => ({
+          todos
+        }));
+        throw err;
+      });
   };
 
   handleEditStart = id => {
@@ -155,10 +173,21 @@ class App extends Component {
       ...todos.slice(idx + 1)
     ];
 
-    this.setState({
+    this.setState((state, props) => ({
       todos: nextTodos,
       editingId: null
-    });
+    }));
+
+    console.log('editSave start');
+    api.patchTodo(id, { text })
+      .then(res => {
+        console.log('editSave complete');
+      })
+      .catch(err => {
+        console.log('editSave fail');
+        this.setState((state, props) => ({ todos }));
+        throw err;
+      });
   };
 
   handleEditCancel = () => {
@@ -171,9 +200,24 @@ class App extends Component {
     const { todos } = this.state;
     const nextTodos = todos.filter(todo => !todo.isDone);
 
-    this.setState({
+    this.setState((state, props) => ({
       todos: nextTodos
-    });
+    }));
+
+    const axiArray = todos
+      .filter(todo => todo.isDone)
+      .map(todo => api.deleteTodo(todo.id));
+
+    console.log('clearComplete start');
+    axios.all(axiArray)
+      .then(res => {
+        console.log('clearComplete complete')
+      })
+      .catch(err => {
+        console.log('clearComplete fail');
+        this.setState((state, props) => ({ todos }));
+        throw err;
+      });
   }
 
   render() {
