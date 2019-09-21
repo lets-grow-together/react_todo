@@ -1,225 +1,80 @@
 import React, { Component } from 'react';
-import axios from 'axios';
-import produce from 'immer';
 
-import * as api from '../lib/api';
 import PageTemplate from './PageTemplate';
 import Header from './Header';
 import TodoList from './TodoList';
 import Footer from './Footer';
 
 class App extends Component {
-  state = {
-    input: '',
-    todos: [
-      // { id: 0, text: '리액트 공부하기', isDone: true },
-      // { id: 1, text: 'ES6 기초', isDone: false },
-      // { id: 2, text: '컴포넌트 스타일링 하기', isDone: false }
-    ],
-    editingId: null
-  };
+  // state = {
+  //   input: '',
+  //   todos: [
+  //     { id: 0, text: '리액트 공부하기', isDone: true },
+  //     { id: 1, text: 'ES6 기초', isDone: false },
+  //     { id: 2, text: '컴포넌트 스타일링 하기', isDone: false }
+  //   ],
+  //   editingId: null
+  // };
 
   componentDidMount() {
-    this.getTodos();
+    //this.getTodos();
+    this.props.TodosActions.initTodos();
   }
 
-  getTodos() {
-    console.log('getTodos start');
-    api.getTodos().then(res => {
-      const { data } = res;
-        const initialTodos = Object.keys(data).reduce(
-          (acc, key) => {
-            acc.push({ id: key, text: data[key].text, isDone: data[key].isDone });
-            return acc;
-          },
-          []
-        );
-        this.setState({
-          todos: initialTodos
-        });
-        console.log('getTodos complete');
-    })
-    .catch(err => {
-      console.log('getTodos fail');
-      throw err;
-    });
-  }
+  // getTodos() {
+  //   console.log('getTodos start');
+  //   api.getTodos().then(res => {
+  //     const { data } = res;
+  //       const initialTodos = Object.keys(data).reduce(
+  //         (acc, key) => {
+  //           acc.push({ id: key, text: data[key].text, isDone: data[key].isDone });
+  //           return acc;
+  //         },
+  //         []
+  //       );
+  //       this.setState({
+  //         todos: initialTodos
+  //       });
+  //       console.log('getTodos complete');
+  //   })
+  //   .catch(err => {
+  //     console.log('getTodos fail');
+  //     throw err;
+  //   });
+  // }
 
   handleChange = e => {
     const { value } = e.target;
+    this.props.InputActions.changeInput(value);
 
-    this.setState({
-      input: value
-    });
+    // this.setState({
+    //   input: value
+    // });
   };
 
   handleInsert = () => {
-    const { input, todos } = this.state;
-    const tempId = 'temp_' + Date.now();
-    const newTodo = { id: tempId, text: input, isDone: false };
-
-    // this.setState((state, props) => ({
-    //   input: '',
-    //   todos: [...todos, newTodo]
-    // }));
-
-    // this.setState(produce(this.state, draft => {
-    //   draft.input = '';
-    //   draft.todos.push(newTodo);
-    // }));
-
-    this.setState(produce((draft) => {
-      draft.input = '';
-      draft.todos.push(newTodo);
-    }));
-
-    console.log('insertTodo start');
-    api.insertTodo(input)
-      .then(res => {
-        // this.setState((state, props) => ({
-        //   todos: [...todos, { id: res.data.name, text: input, isDone: false }]
-        // }));
-        this.setState(produce(draft => {
-          draft.todos[draft.todos.length - 1].id = res.data.name;
-        }));
-        console.log('insertTodo complete');
-      }).catch(err => {
-        console.log('insertTodo fail');
-        this.setState((state, props) => ({
-          todos: todos
-        }));
-      });
+    this.props.TodosActions.insertTodo();
+    this.props.InputActions.clearInput();
   };
 
   handleRemove = id => {
-    const { todos } = this.state;
-    const idx = todos.findIndex(todo => todo.id === id);
-
-    this.setState(produce(draft => {
-      draft.todos.splice(idx, 1);
-    }))
-
-    console.log('deletTodo start');
-    api.deleteTodo(id)
-      .then(res => {
-        console.log('deleteTodo complete');
-      })
-      .catch(err => {
-        console.log('deleteTodo fail');
-        this.setState((state, props) => ({
-          todos
-        }));
-        throw err;
-      })
+    this.props.TodosActions.removeTodo(id);
   };
 
-  handleToggle = id => {
-    const { todos } = this.state;
-    const idx = todos.findIndex(todo => todo.id === id);
-    const nextIsDone = !todos[idx].isDone;
+  handleToggle = id => this.props.TodosActions.toggleTodo(id);
 
-    this.setState(produce(draft => {
-      draft.todos[idx].isDone = nextIsDone;
-    }));
-    
-    console.log('toggleTodo start');
-    api.patchTodo(id, { isDone: nextIsDone })
-      .then(res => {
-        console.log('toggleTodo complete');
-      })
-      .catch(err => {
-        this.setState((state, props) => ({
-          todos
-        }));
-        console.log('toggleTodo fail');
-        throw err;
-      });
-  };
+  handleToggleAll = () => this.props.TodosActions.toggleAll();
 
-  handleToggleAll = () => {
-    const { todos } = this.state;
-    const nextIsDone = todos.some(todo => !todo.isDone);
+  handleEditStart = id => this.props.TodosActions.editStart(id);
 
-    this.setState(produce(draft => {
-      draft.todos.forEach(todo => todo.isDone = nextIsDone);
-    }));
+  handleEditSave = (id, text) => this.props.TodosActions.editSave(id, text);
 
-    const axiArray = todos.map(todo =>
-      api.patchTodo(todo.id, { isDone: nextIsDone })
-    );
+  handleEditCancel = () => this.props.TodosActions.editCancel();
 
-    console.log('toggleAll start');
-    axios.all(axiArray)
-      .then(res => {
-        console.log('toggleAll complete');
-      })
-      .catch(err => {
-        console.log('toggleAll faile');
-        this.setState((state, props) => ({
-          todos
-        }));
-        throw err;
-      });
-  };
-
-  handleEditStart = id => {
-    this.setState({
-      editingId: id
-    });
-  };
-
-  handleEditSave = (id, text) => {
-    const { todos } = this.state;
-    const idx = todos.findIndex(todo => todo.id === id);
-
-    this.setState(produce(draft => {
-      draft.todos[idx].text = text;
-      draft.editingId = null;
-    }));
-
-    console.log('editSave start');
-    api.patchTodo(id, { text })
-      .then(res => {
-        console.log('editSave complete');
-      })
-      .catch(err => {
-        console.log('editSave fail');
-        this.setState((state, props) => ({ todos }));
-        throw err;
-      });
-  };
-
-  handleEditCancel = () => {
-    this.setState({
-      editingId: null
-    });
-  };
-
-  handleClearCompleted = () => {
-    const { todos } = this.state;
-
-    this.setState(produce(draft => {
-      draft.todos = draft.todos.filter(todo => !todo.isDone);
-    }));
-
-    const axiArray = todos
-      .filter(todo => todo.isDone)
-      .map(todo => api.deleteTodo(todo.id));
-
-    console.log('clearComplete start');
-    axios.all(axiArray)
-      .then(res => {
-        console.log('clearComplete complete')
-      })
-      .catch(err => {
-        console.log('clearComplete fail');
-        this.setState((state, props) => ({ todos }));
-        throw err;
-      });
-  }
+  handleClearCompleted = () => this.props.TodosActions.clearCompleted();
 
   render() {
-    const { input, todos, editingId } = this.state;
+    const { input, todos, editingId } = this.props;
     const { match: { params } } = this.props;
     const {
       handleChange,
