@@ -4,189 +4,223 @@ import axios from 'axios';
 
 import * as api from '../lib/api';
 
-const INIT_TODOS_PENDING = 'INIT_TODOS_PENDING';
-const INIT_TODOS_SUCCESS = 'INIT_TODOS_SUCCESS';
-const INIT_TODOS_FAILURE = 'INIT_TODOS_FAILURE';
-const INSERT_TODOS_PENDING = 'INSERT_TODOS_PENDING';
-const INSERT_TODOS_SUCCESS = 'INSERT_TODOS_SUCCESS';
-const INSERT_TODOS_FAILURE = 'INSERT_TODOS_FAILURE';
-const REMOVE_TODOS_PENDING = 'REMOVE_TODOS_PENDING';
-const REMOVE_TODOS_SUCCESS = 'REMOVE_TODOS_SUCCESS';
-const REMOVE_TODOS_FAILURE = 'REMOVE_TODOS_FAILURE';
-const TOGGLE_TODO_PENDING = 'TOGGLE_TODO_PENDING';
-const TOGGLE_TODO_SUCCESS = 'TOGGLE_TODO_SUCCESS';
-const TOGGLE_TODO_FAILURE = 'TOGGLE_TODO_FAILURE';
-const TOGGLE_ALL_PENDING = 'TOGGLE_ALL_PENDING';
-const TOGGLE_ALL_SUCCESS = 'TOGGLE_ALL_SUCCESS';
-const TOGGLE_ALL_FAILURE = 'TOGGLE_ALL_FAILURE';
-const EDIT_START = 'EDIT_START';
-const EDIT_CANCEL = 'EDIT_CANCEL';
-const EDIT_SAVE_PENDING = 'EDIT_SAVE_PENDING';
-const EDIT_SAVE_SUCCESS = 'EDIT_SAVE_SUCCESS';
-const EDIT_SAVE_FAILURE = 'EDIT_SAVE_FAILURE';
-const CLEAR_COMPLETED_PENDING = 'CLEAR_COMPLETED_PENDING';
-const CLEAR_COMPLETED_SUCCESS = 'CLEAR_COMPLETED_SUCCESS';
-const CLEAR_COMPLETED_FAILURE = 'CLEAR_COMPLETED_FAILURE';
+// const INIT_TODOS_PENDING = 'INIT_TODOS_PENDING';
+// const INIT_TODOS_SUCCESS = 'INIT_TODOS_SUCCESS';
+// const INIT_TODOS_FAILURE = 'INIT_TODOS_FAILURE';
+const INIT_TODOS = 'todos/INIT_TODOS';
+const INSERT_TODOS = 'todos/INSERT_TODOS';
+const REMOVE_TODOS = 'todos/REMOVE_TODOS';
+const TOGGLE_TODO = 'todos/TOGGLE_TODO';
+const TOGGLE_ALL = 'todos/TOGGLE_ALL';
+const EDIT_START = 'todos/EDIT_START';
+const EDIT_CANCEL = 'todos/EDIT_CANCEL';
+const EDIT_SAVE = 'todos/EDIT_SAVE';
+const CLEAR_COMPLETED = 'todos/CLEAR_COMPLETED';
 
-const initTodoPending = createAction(INIT_TODOS_PENDING);
-const initTodoSuccess = createAction(INIT_TODOS_SUCCESS, todos => todos);
-const initTodoFailure = createAction(INIT_TODOS_FAILURE, err => err);
+// const initTodoPending = createAction(INIT_TODOS_PENDING);
+// const initTodoSuccess = createAction(INIT_TODOS_SUCCESS, todos => todos);
+// const initTodoFailure = createAction(INIT_TODOS_FAILURE, err => err);
 export const initTodos = () => dispatch => {
-  dispatch(initTodoPending());
   console.log('initTodos start');
+  
+  // dispatch(initTodoPending());
+  // return api.getTodos().then(res => {
+  //   const { data } = res;
+  //   const initialTodos = Object.keys(data).reduce((acc, key) => {
+  //     acc.push({ id: key, text: data[key].text, isDone: data[key].isDone});
+  //     return acc;
+  //   }, []);
 
-  return api.getTodos().then(res => {
-    const { data } = res;
-    const initialTodos = Object.keys(data).reduce((acc, key) => {
-      acc.push({ id: key, text: data[key].text, isDone: data[key].isDone});
-      return acc;
-    }, []);
+  //   dispatch(initTodoSuccess(initialTodos));
+  //   console.log('initTodos complete');
+  // })
+  // .catch(err => {
+  //   dispatch(initTodoFailure(err));
+  //   console.log('initTodo fail');
+  //   throw err;
+  // });
 
-    dispatch(initTodoSuccess(initialTodos));
-    console.log('initTodos complete');
-  })
-  .catch(err => {
-    dispatch(initTodoFailure(err));
-    console.log('initTodo fail');
-    throw err;
-  });
+  return dispatch({
+    type: INIT_TODOS,
+    payload: {
+      promise: new Promise((resolve, reject) => {
+        api.getTodos()
+          .then(({ data }) => {
+            const initialTodos = Object.keys(data).reduce((acc, key) => {
+              acc.push({ id: key, text: data[key].text, isDone: data[key].isDone });
+              return acc;
+            }, []);
+            resolve(initialTodos);
+            console.log('initTodos complete');
+          })
+          .catch(err => {
+            reject(err);
+            console.log('initTodos fail');
+          })
+      })
+    }
+  }).catch(err => console.error(err));
 };
 
-const insertTodoPending = createAction(INSERT_TODOS_PENDING, todo => todo);
-const insertTodoSuccess = createAction(INSERT_TODOS_SUCCESS, id => id);
-const insertTodoFailure = createAction(INSERT_TODOS_FAILURE, err => err);
 export const insertTodo = () => (dispatch, getState) => {
   const { inputData: input } = getState();
   const tempId = 'temp_' + Date.now();
   const tempTodo = { id: tempId, text: input, isDone: false };
 
-  dispatch(insertTodoPending(tempTodo));
   console.log('insertTodo start');
 
-  return api.insertTodo(input)
-    .then(res => {
-      dispatch(insertTodoSuccess(res.data.name));
-      console.log('insertTodo success');
-    })
-    .catch(err => {
-      dispatch(insertTodoFailure(err));
-      console.log('insertTodo fail');
-    });
+  return dispatch({
+    type: INSERT_TODOS,
+    payload: {
+      data: tempTodo,
+      promise: new Promise((resolve, reject) => {
+        api.insertTodo(input)
+          .then(({ data }) => {
+            resolve(data.name);
+            console.log('insertTodo success');
+          })
+          .catch(err => {
+            reject(err);
+            console.log('insertTodo fail');
+          })
+      })
+    }
+  }).catch(err => console.error(err));
 };
 
-const removeTodoPending = createAction(REMOVE_TODOS_PENDING, idx => idx);
-const removeTodoSuccess = createAction(REMOVE_TODOS_SUCCESS);
-const removeTodoFailure = createAction(REMOVE_TODOS_FAILURE, ({ todos, err }) => ({ todos, err }));
 export const removeTodo = id => (dispatch, getState) => {
   const { todosData: { todos } } = getState();
   const idx = todos.findIndex(todo => todo.id === id);
 
-  dispatch(removeTodoPending(idx));
   console.log('removeTodo start');
 
-  return api.deleteTodo(id)
-    .then(res => {
-      dispatch(removeTodoSuccess());
-      console.log('removeTodo complete');
-    })
-    .catch(err => {
-      dispatch(removeTodoFailure({ todos, err}));
-      console.log('removeTodo fail');
-    });
+  return dispatch({
+    type: REMOVE_TODOS,
+    payload: {
+      data: idx,
+      promise: new Promise((resolve, reject) => {
+        api.deleteTodo(id)
+          .then(res => {
+            resolve();
+            console.log('removeTodo complete');
+          })
+          .catch(err => {
+            reject({ todos, err });
+            console.log('removeTodo fail');
+          });
+      })
+    }
+  }).catch(err => console.error(err));
 };
 
-const toggleTodoPending = createAction(TOGGLE_TODO_PENDING, idx => idx);
-const toggleTodoSuccess = createAction(TOGGLE_TODO_SUCCESS);
-const toggleTodoFailure = createAction(TOGGLE_TODO_FAILURE, ({ idx, err }) => ({ idx, err }));
 export const toggleTodo = id => (dispatch, getState) => {
   const { todosData: { todos } } = getState();
   const idx = todos.findIndex(todo => todo.id === id);
   const nextIsDone = !todos[idx].isDone;
 
-  dispatch(toggleTodoPending(idx));
   console.log('toggleTodo Start');
 
-  return api.patchTodo(id, { isDone: nextIsDone })
-    .then(res => {
-      dispatch(toggleTodoSuccess());
-      console.log('toggleTodo complete');
-    })
-    .catch(err => {
-      dispatch(toggleTodoFailure({ idx, err }));
-      console.log('toggleTodo failure');
-    });
+  return dispatch({
+    type: TOGGLE_TODO,
+    payload: {
+      data: idx,
+      promise: new Promise((resolve, reject) => {
+        api.patchTodo(id, { isDone: nextIsDone })
+          .then(res => {
+            resolve();
+            console.log('toggleTodo complete');
+          })
+          .catch(err => {
+            reject({ idx, err });
+            console.log('toggleTodo failure');
+          });
+      })
+    }
+  }).catch(err => console.error(err));
 };
 
-const toggleAllPending = createAction(TOGGLE_ALL_PENDING, nextIsDone => nextIsDone);
-const toggleAllSuccess = createAction(TOGGLE_ALL_SUCCESS);
-const toggleAllFailure = createAction(TOGGLE_ALL_FAILURE, ({ todos, err }) => ({ todos, err }));
 export const toggleAll = () => (dispatch, getState) => {
   const { todosData: { todos } } = getState();
   const nextIsDone = todos.some(todo=> !todo.isDone);
-
-  dispatch(toggleAllPending(nextIsDone));
-  console.log('toggleAll Start');
-
   const axiArray = todos.map(todo =>
     api.patchTodo(todo.id, { isDone: nextIsDone })
   );
 
-  return axios.all(axiArray)
-    .then(res => {
-      dispatch(toggleAllSuccess());
-      console.log('toggleAll complete');
-    })
-    .catch(err => {
-      dispatch(toggleAllFailure({ todos, err }));
-      console.log('toggleAll failure');
-    });
+  console.log('toggleAll Start');
+
+  return dispatch({
+    type: TOGGLE_ALL,
+    payload: {
+      data: nextIsDone,
+      promise: new Promise((resolve, reject) => {
+        axios.all(axiArray)
+          .then(res => {
+            resolve();
+            console.log('toggleAll complete');
+          })
+          .catch(err => {
+            reject({ todos, err });
+            console.log('toggleAll failure');
+          });
+      })
+    }
+  }).catch(err => console.error(err));
 };
 
 export const editStart = createAction(EDIT_START, id => id);
 export const editCancel = createAction(EDIT_CANCEL);
-const editSavePending = createAction(EDIT_SAVE_PENDING, ({ idx, text }) => ({ idx, text }));
-const editSaveSuccess = createAction(EDIT_SAVE_SUCCESS);
-const editSaveFailure = createAction(EDIT_SAVE_FAILURE, ({ todos, err }) => ({ todos, err }));
+
 export const editSave = (id, text) => (dispatch, getState) => {
   const { todosData: { todos } } = getState();
   const idx = todos.findIndex(todo => todo.id === id);
 
-  dispatch(editSavePending({ idx, text }));
   console.log('editSave start');
 
-  return api.patchTodo(id, { text })
-    .then(res => {
-      dispatch(editSaveSuccess());
-      console.log('editSave success');
-    })
-    .catch(err => {
-      dispatch(editSaveFailure({ todos, err }));
-      console.log('editSave failure');
-    });
+  return dispatch({
+    type: EDIT_SAVE,
+    payload: {
+      data: { idx, text },
+      promise: new Promise((resolve, reject) => {
+        api.patchTodo(id, { text })
+          .then(res => {
+            resolve();
+            console.log('editSave success');
+          })
+          .catch(err => {
+            reject({ todos, err });
+            console.log('editSave failure');
+          });
+      })
+    }
+  }).catch(err => console.error(err));
 };
 
-const clearCompletedPending = createAction(CLEAR_COMPLETED_PENDING);
-const clearCompletedSuccess = createAction(CLEAR_COMPLETED_SUCCESS);
-const clearCompletedFailure = createAction(CLEAR_COMPLETED_FAILURE, ({ todos, err }) => ({ todos, err }));
 export const clearCompleted = () => (dispatch, getState) => {
   const { todosData: { todos } } = getState();
-
-  dispatch(clearCompletedPending());
-  console.log('clearCompleted start');
-
+  const nextTodos = todos.filter(todo => !todo.isDone);
   const axiArray = todos
     .filter(todo => todo.isDone)
     .map(todo => api.deleteTodo(todo.id));
 
-  return axios.all(axiArray)
-    .then(res => {
-      dispatch(clearCompletedSuccess());
-      console.log('clearCompleted success');
-    })
-    .catch(err => {
-      dispatch(clearCompletedFailure({ todos, err }));
-      console.log('clearCompleted failure');
-    });
+  console.log('clearCompleted start');
+
+  return dispatch({
+    type: CLEAR_COMPLETED,
+    payload: {
+      data: nextTodos,
+      promise: new Promise((resolve, reject) => {
+        axios.all(axiArray)
+          .then(res => {
+            resolve();
+            console.log('clearCompleted success');
+          })
+          .catch(err => {
+            reject({ todos, err });
+            console.log('clearCompleted failure');
+          });
+      })
+    }
+  }).catch(err => console.error(err));
 }
 
 const initialState = {
@@ -197,20 +231,20 @@ const initialState = {
 };
 
 export default handleActions({
-  [INIT_TODOS_PENDING]: (state, action) => {
+  [`${INIT_TODOS}_PENDING`]: (state, action) => {
     return produce(state, draft => {
       draft.pending = true;
       draft.error = false;
     });
   },
-  [INIT_TODOS_SUCCESS]: (state, action) => {
+  [`${INIT_TODOS}_SUCCESS`]: (state, action) => {
     const { payload: todos } = action;
     return produce(state, draft => {
       draft.todos = todos;
       draft.pending = false;
     });
   },
-  [INIT_TODOS_FAILURE]: (state, action) => {
+  [`${INIT_TODOS}_FAILURE`]: (state, action) => {
     const { payload: err } = action;
     console.log(err);
     return produce(state, draft => {
@@ -218,7 +252,7 @@ export default handleActions({
       draft.error = true;
     });
   },
-  [INSERT_TODOS_PENDING]: (state, action) => {
+  [`${INSERT_TODOS}_PENDING`]: (state, action) => {
     const { payload: tempTodo } = action;
     return produce(state, draft => {
       draft.todos.push(tempTodo);
@@ -226,14 +260,14 @@ export default handleActions({
       draft.error = false;
     });
   },
-  [INSERT_TODOS_SUCCESS]: (state, action) => {
+  [`${INSERT_TODOS}_SUCCESS`]: (state, action) => {
     const { payload: id } = action;
     return produce(state, draft => {
       draft.todos[draft.todos.length - 1].id = id;
       draft.pending = false;
     });
   },
-  [INSERT_TODOS_FAILURE]: (state, action) => {
+  [`${INSERT_TODOS}_FAILURE`]: (state, action) => {
     const { payload: err } = action;
     console.log(err);
     return produce(state, draft => {
@@ -242,7 +276,7 @@ export default handleActions({
       draft.error = true;
     });
   },
-  [REMOVE_TODOS_PENDING]: (state, action) => {
+  [`${REMOVE_TODOS}_PENDING`]: (state, action) => {
     const { payload: idx } = action;
     return produce(state, draft => {
       draft.todos.splice(idx, 1);
@@ -250,12 +284,12 @@ export default handleActions({
       draft.error = false;
     });
   },
-  [REMOVE_TODOS_SUCCESS]: (state, action) => {
+  [`${REMOVE_TODOS}_SUCCESS`]: (state, action) => {
     return produce(state, draft => {
       draft.pending = false;
     });
   },
-  [REMOVE_TODOS_FAILURE]: (state, action) => {
+  [`${REMOVE_TODOS}_FAILURE`]: (state, action) => {
     const { todos, err } = action.payload;
     console.log(err);
     return produce(state, draft => {
@@ -264,7 +298,7 @@ export default handleActions({
       draft.error = true;
     });
   },
-  [TOGGLE_TODO_PENDING]: (state, action) => {
+  [`${TOGGLE_TODO}_PENDING`]: (state, action) => {
     const { payload: idx } = action;
     return produce(state, draft => {
       draft.todos[idx].isDone = !draft.todos[idx].isDone;
@@ -272,12 +306,12 @@ export default handleActions({
       draft.error = false;
     });
   },
-  [TOGGLE_TODO_SUCCESS]: (state, action) => {
+  [`${TOGGLE_TODO}_SUCCESS`]: (state, action) => {
     return produce(state, draft => {
       draft.pending = false;
     });
   },
-  [TOGGLE_TODO_FAILURE]: (state, action) => {
+  [`${TOGGLE_TODO}_FAILURE`]: (state, action) => {
     const { idx, err } = action.payload;
     console.log(err);
     return produce(state, draft => {
@@ -286,7 +320,7 @@ export default handleActions({
       draft.error = true;
     });
   },
-  [TOGGLE_ALL_PENDING]: (state, action) => {
+  [`${TOGGLE_ALL}_PENDING`]: (state, action) => {
     const { payload: nextIsDone } = action;
     return produce(state, draft => {
       draft.todos.forEach(todo => todo.isDone = nextIsDone);
@@ -294,12 +328,12 @@ export default handleActions({
       draft.error = false;
     });
   },
-  [TOGGLE_ALL_SUCCESS]: (state, action) => {
+  [`${TOGGLE_ALL}_SUCCESS`]: (state, action) => {
     return produce(state, draft => {
       draft.pending = false;
     });
   },
-  [TOGGLE_ALL_FAILURE]: (state, action) => {
+  [`${TOGGLE_ALL}_FAILURE`]: (state, action) => {
     const { todos, err } = action.payload;
     console.log(err);
     return produce(state, draft => {
@@ -319,7 +353,7 @@ export default handleActions({
       draft.editingId = null;
     })
   },
-  [EDIT_SAVE_PENDING]: (state, action) => {
+  [`${EDIT_SAVE}_PENDING`]: (state, action) => {
     const { idx, text } = action.payload;
     return produce(state, draft => {
       draft.todos[idx].text = text;
@@ -328,12 +362,12 @@ export default handleActions({
       draft.error = false;
     });
   },
-  [EDIT_SAVE_SUCCESS]: (state, action) => {
+  [`${EDIT_SAVE}_SUCCESS`]: (state, action) => {
     return produce(state, draft => {
       draft.pending = false;
     });
   },
-  [EDIT_SAVE_FAILURE]: (state, action) => {
+  [`${EDIT_SAVE}_FAILURE`]: (state, action) => {
     const { todos, err } = action.payload;
     console.log(err);
     return produce(state, draft => {
@@ -342,19 +376,19 @@ export default handleActions({
       draft.error = true;
     });
   },
-  [CLEAR_COMPLETED_PENDING]: (state, action) => {
+  [`${CLEAR_COMPLETED}_PENDING`]: (state, action) => {
     return produce(state, draft => {
       draft.todos = draft.todos.filter(todo => !todo.isDone);
       draft.pending = true;
       draft.error = false;
     });
   },
-  [CLEAR_COMPLETED_SUCCESS]: (state, action) => {
+  [`${CLEAR_COMPLETED}_SUCCESS`]: (state, action) => {
     return produce(state, draft => {
       draft.pending = false;
     });
   },
-  [CLEAR_COMPLETED_FAILURE]: (state, action) => {
+  [`${CLEAR_COMPLETED}_FAILURE`]: (state, action) => {
     const { todos, err } = action.payload;
     console.log(err);
     return produce(state, draft => {
